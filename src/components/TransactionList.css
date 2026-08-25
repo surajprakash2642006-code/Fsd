@@ -1,0 +1,257 @@
+.transaction-list {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Filters */
+.transaction-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 10px 18px;
+  border: 2px solid #e2e8f0;
+  background: #f7fafc;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Sora', sans-serif;
+}
+
+.filter-btn:hover {
+  border-color: #cbd5e0;
+  background: white;
+}
+
+.filter-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Transactions Container */
+.transactions-container {
+  min-height: 200px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: #a0aec0;
+  animation: fadeIn 0.6s ease-out;
+}
+
+.empty-state p:first-child {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.empty-state p.empty-text {
+  font-size: 16px;
+  color: #718096;
+}
+
+/* Transactions Grid */
+.transactions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #f7fafc;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  animation: slideInUp 0.5s ease-out;
+  cursor: pointer;
+}
+
+.transaction-item:hover {
+  background: white;
+  border-color: #e2e8f0;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.transaction-item.income {
+  border-left: 4px solid #48bb78;
+}
+
+.transaction-item.expense {
+  border-left: 4px solid #f56565;
+}
+
+.transaction-main {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.transaction-icon {
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  animation: iconBounce 2s ease-in-out infinite;
+}
+
+.transaction-details {
+  flex: 1;
+}
+
+.transaction-category {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 4px;
+}
+
+.transaction-note {
+  font-size: 13px;
+  color: #718096;
+  margin-bottom: 6px;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transaction-date {
+  font-size: 12px;
+  color: #a0aec0;
+  font-weight: 500;
+}
+
+/* Amount Section */
+.transaction-amount {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.amount {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a202c;
+  min-width: 100px;
+  text-align: right;
+}
+
+.transaction-item.income .amount {
+  color: #48bb78;
+}
+
+.transaction-item.expense .amount {
+  color: #f56565;
+}
+
+.delete-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #fed7d7;
+  color: #c53030;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn:hover {
+  background: #fc8181;
+  color: white;
+  transform: scale(1.1);
+}
+
+.delete-btn:active {
+  transform: scale(0.95);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iconBounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (max-width: 768px) {
+  .transaction-list {
+    padding: 20px;
+  }
+
+  .transaction-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .transaction-amount {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .amount {
+    text-align: left;
+  }
+}

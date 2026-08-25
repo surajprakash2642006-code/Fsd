@@ -1,0 +1,131 @@
+.budget-card {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  animation: cardSlideIn 0.5s ease-out;
+}
+
+.budget-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, currentColor, transparent);
+}
+
+.budget-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.budget-card.green {
+  color: #48bb78;
+}
+
+.budget-card.red {
+  color: #f56565;
+}
+
+.budget-card.blue {
+  color: #4299e1;
+}
+
+.budget-card.orange {
+  color: #ed8936;
+}
+
+.card-content {
+  position: relative;
+  z-index: 1;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.card-icon {
+  font-size: 32px;
+  display: inline-block;
+  animation: iconBounce 2s ease-in-out infinite;
+}
+
+.card-trend {
+  font-size: 14px;
+  font-weight: 600;
+  color: currentColor;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.card-title {
+  font-size: 14px;
+  color: #718096;
+  font-weight: 500;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-amount {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a202c;
+  letter-spacing: -0.5px;
+}
+
+.card-background {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, currentColor, transparent);
+  opacity: 0.03;
+  border-radius: 50%;
+  transform: translate(30%, -30%);
+}
+
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iconBounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (max-width: 768px) {
+  .budget-card {
+    padding: 20px;
+  }
+
+  .card-amount {
+    font-size: 24px;
+  }
+
+  .card-icon {
+    font-size: 28px;
+  }
+}
