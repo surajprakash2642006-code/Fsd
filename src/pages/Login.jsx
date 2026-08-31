@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import './Login.css'
 
+const API_BASE_URL = 'http://localhost:5000/api'
+
 export default function Login({ onLogin }) {
   const [isSignup, setIsSignup] = useState(false)
   const [formData, setFormData] = useState({
@@ -9,6 +11,7 @@ export default function Login({ onLogin }) {
     password: '',
   })
   const [errors, setErrors] = useState({})
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -32,15 +35,36 @@ export default function Login({ onLogin }) {
     return newErrors
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const newErrors = validateForm()
 
     if (Object.keys(newErrors).length === 0) {
-      onLogin({
-        name: formData.name || formData.email.split('@')[0],
-        email: formData.email,
-      })
+      setLoading(true)
+      try {
+        const endpoint = isSignup ? 'signup' : 'signin'
+        const payload = isSignup
+          ? { name: formData.name, email: formData.email, password: formData.password }
+          : { email: formData.email, password: formData.password }
+
+        const response = await fetch(`${API_BASE_URL}/auth/${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          setErrors({ form: data.error || 'Authentication failed' })
+        } else {
+          onLogin(data.user)
+        }
+      } catch (error) {
+        setErrors({ form: 'Network error. Make sure backend is running on port 5000.' })
+      } finally {
+        setLoading(false)
+      }
     } else {
       setErrors(newErrors)
     }
@@ -72,6 +96,7 @@ export default function Login({ onLogin }) {
             </div>
 
             <form onSubmit={handleSubmit} className="login-form">
+              {errors.form && <div className="error-text" style={{ marginBottom: '1rem', textAlign: 'center' }}>{errors.form}</div>}
               {isSignup && (
                 <div className="form-group">
                   <label htmlFor="name">Full Name</label>
@@ -118,8 +143,8 @@ export default function Login({ onLogin }) {
                 )}
               </div>
 
-              <button type="submit" className="login-button">
-                {isSignup ? 'Create Account' : 'Sign In'}
+              <button type="submit" className="login-button" disabled={loading}>
+                {loading ? 'Loading...' : isSignup ? 'Create Account' : 'Sign In'}
               </button>
             </form>
 

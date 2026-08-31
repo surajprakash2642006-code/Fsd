@@ -1,6 +1,6 @@
 # 💰 FinTrack - Personal Finance & Budget Tracker
 
-**A modern, dynamic web application built with React, Tailwind CSS, and Context API** (Experiments 1-3)
+**A modern, dynamic web application built with React, Tailwind CSS, Context API, and Express Backend** (Experiments 1-4)
 
 ## 🎯 Overview
 
@@ -9,20 +9,31 @@ FinTrack is a personal finance management application designed to help users:
 - Set monthly budgets by category
 - Monitor spending with visual alerts
 - View detailed transaction history
+- Persist data in a backend database
 
 ## 📁 Project Structure
 
 ```
 Budget-Tracker/
+├── backend/                  # Backend API (Exp 4)
+│   ├── server.js            # Express server entry point
+│   ├── package.json         # Backend dependencies
+│   ├── db/
+│   │   └── database.js      # SQLite database setup
+│   ├── routes/
+│   │   ├── auth.js          # Authentication endpoints
+│   │   ├── transactions.js  # Transaction API
+│   │   └── budgets.js       # Budget API
+│   └── SETUP.md             # Backend setup guide
 ├── index.html                 # Main HTML entry point
-├── package.json              # Dependencies and scripts
+├── package.json              # Frontend dependencies and scripts
 ├── vite.config.js           # Vite configuration with React + Tailwind
 ├── src/
 │   ├── main.jsx             # React entry point
 │   ├── App.jsx              # Main App component
 │   ├── App.css              # Global styles
 │   ├── pages/
-│   │   ├── Login.jsx        # Authentication page (Exp 1)
+│   │   ├── Login.jsx        # Authentication page (Exp 1, updated for Exp 4)
 │   │   ├── Login.css        # Login styling with animations
 │   │   ├── Dashboard.jsx    # Main dashboard (Exp 1, 2, 3)
 │   │   └── Dashboard.css    # Dashboard styling
@@ -35,9 +46,9 @@ Budget-Tracker/
 │   │   ├── TransactionList.css
 │   │   ├── BudgetStatus.jsx         # Budget tracking (Exp 3)
 │   │   └── BudgetStatus.css
-│   ├── context/              # Context API (Exp 3)
+│   ├── context/              # Context API (Exp 3, updated for Exp 4)
 │   │   ├── AuthContext.jsx   # User authentication context
-│   │   └── BudgetContext.jsx # Budget and transaction context
+│   │   └── BudgetContext.jsx # Budget and transaction context (now calls API)
 │   ├── hooks/               # Custom React Hooks (Exp 2)
 │   │   └── useBudget.js    # useTransactions, useBudgetStatus, etc.
 │   ├── assets/             # Static images
@@ -338,10 +349,81 @@ The app comes with pre-loaded sample data:
 - Avoiding prop drilling
 - Separating business logic from UI
 
-## 🎯 Next Steps (Experiments 4-10)
+## 🚀 Experiment 4: Backend API Integration
+
+### Backend Technology Stack
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: SQLite3
+- **API Style**: RESTful
+- **CORS**: Enabled for frontend communication
+
+### Backend Structure
+```
+backend/
+├── server.js           # Express server setup
+├── package.json        # Dependencies
+├── db/
+│   └── database.js     # SQLite initialization and helpers
+└── routes/
+    ├── auth.js         # POST /signup, /signin
+    ├── transactions.js # GET/POST/DELETE operations
+    └── budgets.js      # Budget CRUD operations
+```
+
+### Database Schema
+- **users**: Stores user credentials (id, email, password, name)
+- **transactions**: Income/expense records with dates
+- **budgets**: Monthly budget limits per category
+
+### API Endpoints
+
+#### Authentication
+- `POST /api/auth/signup` - Create new user
+- `POST /api/auth/signin` - Authenticate user
+
+#### Transactions
+- `GET /api/transactions/:userId` - Fetch all transactions
+- `POST /api/transactions` - Add new transaction
+- `DELETE /api/transactions/:id` - Remove transaction
+
+#### Budgets
+- `GET /api/budgets/:userId` - Get all budgets
+- `POST /api/budgets` - Create or update budget
+- `GET /api/budgets/:userId/spending/:month/:year` - Monthly spending by category
+
+### Frontend Changes (Exp 4)
+- **Login.jsx**: Now calls backend auth endpoints
+- **BudgetContext.jsx**: Fetches/syncs data with backend API
+- All data operations now persist to database
+
+### Running Exp 4
+
+**Terminal 1 - Backend**:
+```bash
+cd backend
+npm install
+npm start
+# Server runs on http://localhost:5000
+```
+
+**Terminal 2 - Frontend**:
+```bash
+npm run dev
+# App runs on http://localhost:5173
+```
+
+### Key Features
+✅ User registration and login  
+✅ Persistent data storage  
+✅ API-driven state management  
+✅ CORS-enabled for local development  
+✅ SQLite database (no setup required)  
+✅ UUID for user/transaction IDs  
+
+## 🎯 Next Steps (Experiments 5-10)
 
 This foundation is ready for:
-- **Exp 4**: REST API integration (backend)
 - **Exp 5**: Input validation and error handling
 - **Exp 6**: JWT authentication
 - **Exp 7**: Docker containerization
@@ -377,9 +459,13 @@ This foundation is ready for:
 
 ---
 
-**Made with ❤️ for learning React fundamentals through a real-world project!**
-#   F s d  
- #   F s d  
- #   F s d  
- #   F s d  
+**Made with ❤️ for learning full-stack development with React and Express!**
+#   F s d 
+ 
+ #   F s d 
+ 
+ #   F s d 
+ 
+ #   F s d 
+ 
  
