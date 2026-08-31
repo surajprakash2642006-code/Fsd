@@ -1,26 +1,11 @@
-import { useState } from 'react'
-import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import './App.css'
 
 export default function App() {
-  const [user, setUser] = useState(null)
-
-  const handleLogin = (userData) => {
-    setUser(userData)
-  }
-
-  const handleLogout = () => {
-    setUser(null)
-  }
+  // Mock user for Exp 1 (just UI, no state management)
+  const user = { name: 'John Doe', email: 'john@example.com' }
 
   return (
-    <>
-      {user ? (
-        <Dashboard user={user} onLogout={handleLogout} />
-      ) : (
-        <Login onLogin={handleLogin} />
-      )}
-    </>
+    <Dashboard user={user} onLogout={() => {}} />
   )
 }
