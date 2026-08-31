@@ -1,128 +1,76 @@
-import { createContext, useState, useCallback, useEffect, useContext } from 'react'
-import AuthContext from './AuthContext'
+import { createContext, useState, useCallback } from 'react'
 
 const BudgetContext = createContext()
-const API_BASE_URL = 'http://localhost:5000/api'
 
 export function BudgetProvider({ children }) {
-  const { user } = useContext(AuthContext)
-  
   // State for transactions
-  const [transactions, setTransactions] = useState([])
-  
+  const [transactions, setTransactions] = useState([
+    {
+      id: 1,
+      type: 'income',
+      category: 'Salary',
+      amount: 50000,
+      note: 'Monthly salary',
+      date: new Date(2024, 7, 1),
+    },
+    {
+      id: 2,
+      type: 'expense',
+      category: 'Food',
+      amount: 1500,
+      note: 'Groceries',
+      date: new Date(2024, 7, 5),
+    },
+    {
+      id: 3,
+      type: 'expense',
+      category: 'Rent',
+      amount: 15000,
+      note: 'Monthly rent',
+      date: new Date(2024, 7, 1),
+    },
+    {
+      id: 4,
+      type: 'expense',
+      category: 'Travel',
+      amount: 2000,
+      note: 'Uber rides',
+      date: new Date(2024, 7, 10),
+    },
+  ])
+
   // State for budgets
-  const [budgets, setBudgets] = useState([])
-  
-  // Loading state
-  const [loading, setLoading] = useState(false)
-
-  // Fetch transactions from backend
-  const fetchTransactions = useCallback(async () => {
-    if (!user || !user.id) return
-    try {
-      setLoading(true)
-      const response = await fetch(`${API_BASE_URL}/transactions/${user.id}`)
-      const data = await response.json()
-      // Convert date strings to Date objects
-      const txns = data.map(t => ({
-        ...t,
-        date: new Date(t.date)
-      }))
-      setTransactions(txns)
-    } catch (error) {
-      console.error('Failed to fetch transactions:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [user])
-
-  // Fetch budgets from backend
-  const fetchBudgets = useCallback(async () => {
-    if (!user || !user.id) return
-    try {
-      const response = await fetch(`${API_BASE_URL}/budgets/${user.id}`)
-      const data = await response.json()
-      setBudgets(data)
-    } catch (error) {
-      console.error('Failed to fetch budgets:', error)
-    }
-  }, [user])
-
-  // Fetch data when user changes
-  useEffect(() => {
-    if (user) {
-      fetchTransactions()
-      fetchBudgets()
-    } else {
-      setTransactions([])
-      setBudgets([])
-    }
-  }, [user, fetchTransactions, fetchBudgets])
+  const [budgets, setBudgets] = useState([
+    { id: 1, category: 'Food', monthlyLimit: 5000, month: 8, year: 2024 },
+    { id: 2, category: 'Rent', monthlyLimit: 15000, month: 8, year: 2024 },
+    { id: 3, category: 'Travel', monthlyLimit: 3000, month: 8, year: 2024 },
+    { id: 4, category: 'Shopping', monthlyLimit: 4000, month: 8, year: 2024 },
+    { id: 5, category: 'Entertainment', monthlyLimit: 2000, month: 8, year: 2024 },
+  ])
 
   // Add transaction
-  const addTransaction = useCallback(async (transaction) => {
-    if (!user || !user.id) return
-    try {
-      const response = await fetch(`${API_BASE_URL}/transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...transaction,
-          userId: user.id,
-          date: new Date(transaction.date).toISOString(),
-        }),
-      })
-      const data = await response.json()
-      if (data.success) {
-        // Refresh transactions
-        await fetchTransactions()
-      }
-    } catch (error) {
-      console.error('Failed to add transaction:', error)
+  const addTransaction = useCallback((transaction) => {
+    const newTransaction = {
+      ...transaction,
+      id: Date.now(),
+      date: new Date(transaction.date),
     }
-  }, [user, fetchTransactions])
+    setTransactions((prev) => [newTransaction, ...prev])
+  }, [])
 
   // Delete transaction
-  const deleteTransaction = useCallback(async (id) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
-        method: 'DELETE',
-      })
-      const data = await response.json()
-      if (data.success) {
-        // Refresh transactions
-        await fetchTransactions()
-      }
-    } catch (error) {
-      console.error('Failed to delete transaction:', error)
-    }
-  }, [fetchTransactions])
+  const deleteTransaction = useCallback((id) => {
+    setTransactions((prev) => prev.filter((t) => t.id !== id))
+  }, [])
 
   // Update budget
-  const updateBudget = useCallback(async (categoryName, newLimit) => {
-    if (!user || !user.id) return
-    try {
-      const now = new Date()
-      const response = await fetch(`${API_BASE_URL}/budgets`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          category: categoryName,
-          monthlyLimit: newLimit,
-          month: now.getMonth() + 1,
-          year: now.getFullYear(),
-        }),
-      })
-      const data = await response.json()
-      if (data.success) {
-        // Refresh budgets
-        await fetchBudgets()
-      }
-    } catch (error) {
-      console.error('Failed to update budget:', error)
-    }
-  }, [user, fetchBudgets])
+  const updateBudget = useCallback((categoryName, newLimit) => {
+    setBudgets((prev) =>
+      prev.map((b) =>
+        b.category === categoryName ? { ...b, monthlyLimit: newLimit } : b
+      )
+    )
+  }, [])
 
   // Get current month spending by category
   const getMonthlySpending = useCallback(() => {
@@ -195,7 +143,6 @@ export function BudgetProvider({ children }) {
     getMonthlySpending,
     getBudgetStatus,
     getMonthlyTotals,
-    loading,
   }
 
   return (
