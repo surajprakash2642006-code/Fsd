@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { BudgetProvider } from './context/BudgetContext'
-import AuthContext from './context/AuthContext'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import './App.css'
@@ -17,14 +15,12 @@ export default function App() {
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
-      <BudgetProvider>
-        {user ? (
-          <Dashboard user={user} onLogout={handleLogout} />
-        ) : (
-          <Login onLogin={handleLogin} />
-        )}
-      </BudgetProvider>
-    </AuthContext.Provider>
+    <>
+      {user ? (
+        <Dashboard user={user} onLogout={handleLogout} />
+      ) : (
+        <Login onLogin={handleLogin} />
+      )}
+    </>
   )
 }
