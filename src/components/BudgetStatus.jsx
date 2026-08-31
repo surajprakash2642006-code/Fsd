@@ -2,9 +2,25 @@ import { useState, useCallback } from 'react'
 import { useBudgetStatus } from '../hooks/useBudget'
 import './BudgetStatus.css'
 
+const CATEGORIES = [
+  { name: 'Food', icon: '🍔', defaultLimit: 5000 },
+  { name: 'Rent', icon: '🏠', defaultLimit: 15000 },
+  { name: 'Travel', icon: '✈️', defaultLimit: 3000 },
+  { name: 'Shopping', icon: '🛍️', defaultLimit: 4000 },
+  { name: 'Entertainment', icon: '🎬', defaultLimit: 2000 },
+  { name: 'Utilities', icon: '💡', defaultLimit: 2000 },
+  { name: 'Healthcare', icon: '🏥', defaultLimit: 3000 },
+  { name: 'Education', icon: '📚', defaultLimit: 5000 },
+]
+
 export default function BudgetStatus({ detailed = false }) {
   const { budgets, getBudgetStatus, updateBudget } = useBudgetStatus()
   const budgetStatus = getBudgetStatus()
+  const [showNewBudgetForm, setShowNewBudgetForm] = useState(false)
+  const [newBudgetData, setNewBudgetData] = useState({
+    category: '',
+    limit: '',
+  })
 
   const [editingId, setEditingId] = useState(null)
   const [editValue, setEditValue] = useState('')
@@ -25,6 +41,14 @@ export default function BudgetStatus({ detailed = false }) {
     [editValue, updateBudget]
   )
 
+  const handleAddBudget = useCallback(() => {
+    if (newBudgetData.category && parseFloat(newBudgetData.limit) > 0) {
+      updateBudget(newBudgetData.category, parseFloat(newBudgetData.limit))
+      setNewBudgetData({ category: '', limit: '' })
+      setShowNewBudgetForm(false)
+    }
+  }, [newBudgetData, updateBudget])
+
   const formatAmount = (num) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -39,91 +63,194 @@ export default function BudgetStatus({ detailed = false }) {
     return 'normal'
   }
 
+  const getCategoryIcon = (category) => {
+    const cat = CATEGORIES.find(c => c.name === category)
+    return cat ? cat.icon : '💰'
+  }
+
+  const getAvailableCategories = () => {
+    const usedCategories = budgetStatus.map(b => b.category)
+    return CATEGORIES.filter(c => !usedCategories.includes(c.name))
+  }
+
   return (
     <div className="budget-status">
-      {budgetStatus.map((budget) => (
-        <div
-          key={budget.id}
-          className={`budget-item ${getStatusColor(budget)}`}
-        >
-          <div className="budget-header">
-            <div className="budget-title">
-              <span className="category-icon">
-                {budget.category === 'Food'
-                  ? '🍔'
-                  : budget.category === 'Rent'
-                  ? '🏠'
-                  : budget.category === 'Travel'
-                  ? '✈️'
-                  : budget.category === 'Shopping'
-                  ? '🛍️'
-                  : budget.category === 'Entertainment'
-                  ? '🎬'
-                  : '💰'}
-              </span>
-              <h4>{budget.category}</h4>
-            </div>
-            <div className="budget-info">
-              <span className="percentage">{budget.percentage}%</span>
-              {budget.isOver && <span className="status-badge over">Over</span>}
-              {budget.isWarning && !budget.isOver && (
-                <span className="status-badge warning">⚠️ Warning</span>
-              )}
-            </div>
+      {/* Budget List */}
+      <div className="budget-list">
+        {budgetStatus.length === 0 ? (
+          <div className="no-budgets-message">
+            <p>📋 No budgets created yet</p>
+            <p className="subtitle">Create a budget to start tracking your spending limits</p>
           </div>
-
-          <div className="budget-progress">
-            <div className="progress-bar">
-              <div
-                className={`progress-fill ${getStatusColor(budget)}`}
-                style={{
-                  width: `${Math.min(budget.percentage, 100)}%`,
-                }}
-              ></div>
-            </div>
-            <div className="progress-text">
-              <span>
-                {formatAmount(budget.spent)} / {formatAmount(budget.monthlyLimit)}
-              </span>
-            </div>
-          </div>
-
-          {detailed && (
-            <div className="budget-edit">
-              {editingId === budget.id ? (
-                <div className="edit-form">
-                  <input
-                    type="number"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    placeholder="New limit"
-                    min="0"
-                  />
-                  <button
-                    className="save-btn"
-                    onClick={() => handleSave(budget.category)}
-                  >
-                    Save
-                  </button>
-                  <button
-                    className="cancel-btn"
-                    onClick={() => setEditingId(null)}
-                  >
-                    Cancel
-                  </button>
+        ) : (
+          budgetStatus.map((budget) => (
+            <div
+              key={budget.id}
+              className={`budget-item ${getStatusColor(budget)}`}
+            >
+              <div className="budget-header">
+                <div className="budget-title">
+                  <span className="category-icon">
+                    {getCategoryIcon(budget.category)}
+                  </span>
+                  <div className="title-info">
+                    <h4>{budget.category}</h4>
+                    <p className="limit-info">Limit: {formatAmount(budget.monthlyLimit)}</p>
+                  </div>
                 </div>
-              ) : (
-                <button
-                  className="edit-btn"
-                  onClick={() => handleEditClick(budget)}
-                >
-                  ✏️ Edit
-                </button>
+                <div className="budget-info">
+                  <span className="percentage">{budget.percentage}%</span>
+                  {budget.isOver && <span className="status-badge over">Over</span>}
+                  {budget.isWarning && !budget.isOver && (
+                    <span className="status-badge warning">⚠️ Warning</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="budget-progress">
+                <div className="progress-bar">
+                  <div
+                    className={`progress-fill ${getStatusColor(budget)}`}
+                    style={{
+                      width: `${Math.min(budget.percentage, 100)}%`,
+                    }}
+                  ></div>
+                </div>
+                <div className="progress-text">
+                  <span className="spent-info">
+                    Spent: {formatAmount(budget.spent)} / {formatAmount(budget.monthlyLimit)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="budget-stats">
+                <div className="stat">
+                  <label>Remaining:</label>
+                  <span className={budget.isOver ? 'over-text' : 'remaining-text'}>
+                    {budget.isOver 
+                      ? `Over by ${formatAmount(budget.spent - budget.monthlyLimit)}`
+                      : formatAmount(budget.remaining)
+                    }
+                  </span>
+                </div>
+                <div className="stat">
+                  <label>Utilization:</label>
+                  <span>{budget.percentage}%</span>
+                </div>
+              </div>
+
+              {detailed && (
+                <div className="budget-edit">
+                  {editingId === budget.id ? (
+                    <div className="edit-form">
+                      <input
+                        type="number"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        placeholder="New limit"
+                        min="0"
+                      />
+                      <button
+                        className="save-btn"
+                        onClick={() => handleSave(budget.category)}
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="cancel-btn"
+                        onClick={() => setEditingId(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className="edit-btn"
+                      onClick={() => handleEditClick(budget)}
+                    >
+                      ✏️ Edit Limit
+                    </button>
+                  )}
+                </div>
               )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Add Budget Section - Only in detailed view */}
+      {detailed && (
+        <div className="add-budget-section">
+          {!showNewBudgetForm ? (
+            <button
+              className="add-budget-btn"
+              onClick={() => setShowNewBudgetForm(true)}
+            >
+              + Add New Budget
+            </button>
+          ) : (
+            <div className="new-budget-form">
+              <h3>Create New Budget</h3>
+              <div className="form-group">
+                <label>Category</label>
+                <select
+                  value={newBudgetData.category}
+                  onChange={(e) =>
+                    setNewBudgetData({ ...newBudgetData, category: e.target.value })
+                  }
+                >
+                  <option value="">Select Category</option>
+                  {getAvailableCategories().map((cat) => (
+                    <option key={cat.name} value={cat.name}>
+                      {cat.icon} {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Monthly Expense Limit (₹)</label>
+                <input
+                  type="number"
+                  value={newBudgetData.limit}
+                  onChange={(e) =>
+                    setNewBudgetData({ ...newBudgetData, limit: e.target.value })
+                  }
+                  placeholder="Enter amount"
+                  min="0"
+                />
+              </div>
+
+              {newBudgetData.category && (
+                <div className="default-suggestion">
+                  Suggested limit: {formatAmount(
+                    CATEGORIES.find(c => c.name === newBudgetData.category)?.defaultLimit || 0
+                  )}
+                </div>
+              )}
+
+              <div className="form-actions">
+                <button
+                  className="create-btn"
+                  onClick={handleAddBudget}
+                  disabled={!newBudgetData.category || !newBudgetData.limit}
+                >
+                  Create Budget
+                </button>
+                <button
+                  className="cancel-form-btn"
+                  onClick={() => {
+                    setShowNewBudgetForm(false)
+                    setNewBudgetData({ category: '', limit: '' })
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           )}
         </div>
-      ))}
+      )}
     </div>
   )
 }

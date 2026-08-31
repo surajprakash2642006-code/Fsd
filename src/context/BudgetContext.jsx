@@ -146,15 +146,20 @@ export function BudgetProvider({ children }) {
   // Get budget status
   const getBudgetStatus = useCallback(() => {
     const spending = getMonthlySpending()
-    return budgets.map((budget) => ({
-      ...budget,
-      spent: spending[budget.category] || 0,
-      percentage: Math.round(
-        ((spending[budget.category] || 0) / budget.monthlyLimit) * 100
-      ),
-      isWarning: (spending[budget.category] || 0) / budget.monthlyLimit >= 0.8,
-      isOver: (spending[budget.category] || 0) > budget.monthlyLimit,
-    }))
+    return budgets.map((budget) => {
+      const spent = spending[budget.category] || 0
+      const remaining = budget.monthlyLimit - spent
+      return {
+        ...budget,
+        spent,
+        remaining: remaining > 0 ? remaining : 0,
+        percentage: Math.round(
+          ((spent / budget.monthlyLimit) * 100)
+        ),
+        isWarning: spent / budget.monthlyLimit >= 0.8,
+        isOver: spent > budget.monthlyLimit,
+      }
+    })
   }, [budgets, getMonthlySpending])
 
   // Get total income and expense for current month
