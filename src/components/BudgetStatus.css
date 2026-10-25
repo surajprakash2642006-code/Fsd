@@ -464,6 +464,13 @@
   cursor: pointer;
 }
 
+.form-hint {
+  font-size: 12px;
+  color: #718096;
+  font-weight: 400;
+  margin-top: -4px;
+}
+
 .default-suggestion {
   background: #c6f6d5;
   border-left: 3px solid #48bb78;

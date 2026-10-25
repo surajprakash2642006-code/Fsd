@@ -1,6 +1,6 @@
 # 💰 FinTrack - Personal Finance & Budget Tracker
 
-**A modern, dynamic web application built with React, Tailwind CSS, Context API, and Express Backend** (Experiments 1-4)
+**A modern, dynamic web application built with React, Tailwind CSS, Context API, and Express Backend** (Experiments 1-6)
 
 ## 🎯 Overview
 
@@ -75,6 +75,27 @@ The app will be available at **http://localhost:5173/**
 npm run build
 npm run preview
 ```
+
+### Docker Setup (Exp 7 and Exp 9)
+```bash
+# Run the full stack with Docker Compose
+cd Budget-Tracker
+docker compose up --build
+```
+
+- Frontend: http://localhost:5173
+- Backend: http://localhost:5000/health
+- MongoDB: mongodb://localhost:27017/fintrack
+
+### Experiment 8: Real-Time Chat
+- Sign in and select the **Live Chat** dashboard tab.
+- Messages are broadcast immediately to all currently connected users through Socket.IO.
+- Chat is a basic demonstration: messages are not saved, and chat usernames are not independently authenticated.
+- Run the frontend and backend, or start the full stack with `docker compose up --build`.
+
+### GitHub Actions CI/CD (Exp 10)
+- The workflow in `.github/workflows/ci.yml` checks the frontend build and backend syntax on every push or pull request.
+- Push to GitHub, then connect the repository to GitHub Actions or a hosting platform like Vercel and Render.
 
 ## 🎨 Experiment 1: Tailwind CSS
 

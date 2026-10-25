@@ -1,89 +1,72 @@
-import sqlite3 from 'sqlite3';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+dotenv.config();
 
-const dbPath = join(__dirname, 'fintrack.db');
-export const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Database connection error:', err);
-  } else {
-    console.log('✓ Connected to SQLite database');
+const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/fintrack';
+
+export const initializeDatabase = async () => {
+  try {
+    await mongoose.connect(mongoUri);
+    console.log('✓ Connected to MongoDB');
+  } catch (error) {
+    console.error('MongoDB connection error:', error.message);
+    throw error;
+  }
+};
+
+const userSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true },
+    name: { type: String, required: true, trim: true },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  },
+  { timestamps: true }
+);
+
+userSchema.pre('save', async function hashPassword(next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+
+  try {
+    this.password = await bcrypt.hash(this.password, 10);
+    return next();
+  } catch (error) {
+    return next(error);
   }
 });
 
-export const initializeDatabase = () => {
-  db.serialize(() => {
-    // Users table
-    db.run(`
-      CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        name TEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+const transactionSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    userId: { type: String, required: true, index: true },
+    type: { type: String, required: true, enum: ['income', 'expense'] },
+    category: { type: String, required: true, trim: true },
+    amount: { type: Number, required: true },
+    note: { type: String, default: '' },
+    date: { type: Date, required: true },
+  },
+  { timestamps: true }
+);
 
-    // Transactions table
-    db.run(`
-      CREATE TABLE IF NOT EXISTS transactions (
-        id TEXT PRIMARY KEY,
-        userId TEXT NOT NULL,
-        type TEXT NOT NULL CHECK(type IN ('income', 'expense')),
-        category TEXT NOT NULL,
-        amount REAL NOT NULL,
-        note TEXT,
-        date DATETIME NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(userId) REFERENCES users(id)
-      )
-    `);
+const budgetSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    userId: { type: String, required: true, index: true },
+    category: { type: String, required: true, trim: true },
+    monthlyLimit: { type: Number, required: true },
+    month: { type: Number, required: true },
+    year: { type: Number, required: true },
+  },
+  { timestamps: true }
+);
 
-    // Budgets table
-    db.run(`
-      CREATE TABLE IF NOT EXISTS budgets (
-        id TEXT PRIMARY KEY,
-        userId TEXT NOT NULL,
-        category TEXT NOT NULL,
-        monthlyLimit REAL NOT NULL,
-        month INTEGER NOT NULL,
-        year INTEGER NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(userId) REFERENCES users(id),
-        UNIQUE(userId, category, month, year)
-      )
-    `);
+budgetSchema.index({ userId: 1, category: 1, month: 1, year: 1 }, { unique: true });
 
-    console.log('✓ Database tables initialized');
-  });
-};
-
-export const runAsync = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
-      if (err) reject(err);
-      else resolve({ lastID: this.lastID, changes: this.changes });
-    });
-  });
-};
-
-export const getAsync = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
-};
-
-export const allAsync = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
-};
+export const User = mongoose.model('User', userSchema);
+export const Transaction = mongoose.model('Transaction', transactionSchema);
+export const Budget = mongoose.model('Budget', budgetSchema);

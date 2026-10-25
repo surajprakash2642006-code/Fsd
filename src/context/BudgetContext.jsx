@@ -7,23 +7,25 @@ const API_BASE_URL = 'http://localhost:5000/api'
 export function BudgetProvider({ children }) {
   const { user } = useContext(AuthContext)
   
-  // State for transactions
   const [transactions, setTransactions] = useState([])
   
-  // State for budgets
   const [budgets, setBudgets] = useState([])
   
-  // Loading state
   const [loading, setLoading] = useState(false)
 
-  // Fetch transactions from backend
   const fetchTransactions = useCallback(async () => {
-    if (!user || !user.id) return
+    if (!user || !user.id || !user.token) return
     try {
       setLoading(true)
-      const response = await fetch(`${API_BASE_URL}/transactions/${user.id}`)
+      const response = await fetch(`${API_BASE_URL}/transactions/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      })
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions')
+      }
       const data = await response.json()
-      // Convert date strings to Date objects
       const txns = data.map(t => ({
         ...t,
         date: new Date(t.date)
@@ -36,11 +38,17 @@ export function BudgetProvider({ children }) {
     }
   }, [user])
 
-  // Fetch budgets from backend
   const fetchBudgets = useCallback(async () => {
-    if (!user || !user.id) return
+    if (!user || !user.id || !user.token) return
     try {
-      const response = await fetch(`${API_BASE_URL}/budgets/${user.id}`)
+      const response = await fetch(`${API_BASE_URL}/budgets/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      })
+      if (!response.ok) {
+        throw new Error('Failed to fetch budgets')
+      }
       const data = await response.json()
       setBudgets(data)
     } catch (error) {
@@ -48,7 +56,6 @@ export function BudgetProvider({ children }) {
     }
   }, [user])
 
-  // Fetch data when user changes
   useEffect(() => {
     if (user) {
       fetchTransactions()
@@ -59,22 +66,22 @@ export function BudgetProvider({ children }) {
     }
   }, [user, fetchTransactions, fetchBudgets])
 
-  // Add transaction
   const addTransaction = useCallback(async (transaction) => {
-    if (!user || !user.id) return
+    if (!user || !user.id || !user.token) return
     try {
       const response = await fetch(`${API_BASE_URL}/transactions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
         body: JSON.stringify({
           ...transaction,
-          userId: user.id,
           date: new Date(transaction.date).toISOString(),
         }),
       })
       const data = await response.json()
       if (data.success) {
-        // Refresh transactions
         await fetchTransactions()
       }
     } catch (error) {
@@ -82,32 +89,35 @@ export function BudgetProvider({ children }) {
     }
   }, [user, fetchTransactions])
 
-  // Delete transaction
   const deleteTransaction = useCallback(async (id) => {
+    if (!user || !user.token) return
     try {
       const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
       })
       const data = await response.json()
       if (data.success) {
-        // Refresh transactions
         await fetchTransactions()
       }
     } catch (error) {
       console.error('Failed to delete transaction:', error)
     }
-  }, [fetchTransactions])
+  }, [user, fetchTransactions])
 
-  // Update budget
   const updateBudget = useCallback(async (categoryName, newLimit) => {
-    if (!user || !user.id) return
+    if (!user || !user.id || !user.token) return
     try {
       const now = new Date()
       const response = await fetch(`${API_BASE_URL}/budgets`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
         body: JSON.stringify({
-          userId: user.id,
           category: categoryName,
           monthlyLimit: newLimit,
           month: now.getMonth() + 1,
@@ -116,7 +126,6 @@ export function BudgetProvider({ children }) {
       })
       const data = await response.json()
       if (data.success) {
-        // Refresh budgets
         await fetchBudgets()
       }
     } catch (error) {
@@ -124,7 +133,6 @@ export function BudgetProvider({ children }) {
     }
   }, [user, fetchBudgets])
 
-  // Get current month spending by category
   const getMonthlySpending = useCallback(() => {
     const now = new Date()
     const currentMonth = now.getMonth()
@@ -143,7 +151,6 @@ export function BudgetProvider({ children }) {
     return spending
   }, [transactions])
 
-  // Get budget status
   const getBudgetStatus = useCallback(() => {
     const spending = getMonthlySpending()
     return budgets.map((budget) => {
@@ -162,7 +169,6 @@ export function BudgetProvider({ children }) {
     })
   }, [budgets, getMonthlySpending])
 
-  // Get total income and expense for current month
   const getMonthlyTotals = useCallback(() => {
     const now = new Date()
     const currentMonth = now.getMonth()
@@ -191,6 +197,46 @@ export function BudgetProvider({ children }) {
     }
   }, [transactions])
 
+  const getAllCategories = useCallback(() => {
+    const categorySet = new Set()
+    
+    transactions.forEach((t) => {
+      categorySet.add(t.category)
+    })
+    
+    budgets.forEach((b) => {
+      categorySet.add(b.category)
+    })
+    
+    return Array.from(categorySet).sort()
+  }, [transactions, budgets])
+
+  const getExpenseCategories = useCallback(() => {
+    const categorySet = new Set()
+    
+    transactions.forEach((t) => {
+      if (t.type === 'expense') {
+        categorySet.add(t.category)
+      }
+    })
+    
+    budgets.forEach((b) => {
+      categorySet.add(b.category)
+    })
+    
+    return Array.from(categorySet).sort()
+  }, [transactions, budgets])
+
+  const getIncomeCategories = useCallback(() => {
+    const categorySet = new Set()
+    transactions.forEach((t) => {
+      if (t.type === 'income') {
+        categorySet.add(t.category)
+      }
+    })
+    return Array.from(categorySet).sort()
+  }, [transactions])
+
   const value = {
     transactions,
     budgets,
@@ -200,6 +246,9 @@ export function BudgetProvider({ children }) {
     getMonthlySpending,
     getBudgetStatus,
     getMonthlyTotals,
+    getAllCategories,
+    getExpenseCategories,
+    getIncomeCategories,
     loading,
   }
 

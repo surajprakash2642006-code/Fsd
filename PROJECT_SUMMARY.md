@@ -918,10 +918,10 @@ backend/
 - Dockerfile for frontend
 - Docker image building
 
-### Exp 8: WebSocket Real-Time Alerts
-- Real-time notifications
-- Budget warnings
-- Live updates
+### Exp 8: WebSocket Real-Time Chat
+- Socket.IO server attached to the Express HTTP server
+- Live chat available from the dashboard
+- Messages broadcast to connected users and not persisted
 
 ### Exp 9: Docker Compose
 - Multi-container orchestration

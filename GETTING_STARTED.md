@@ -301,7 +301,7 @@ Modified:
 - **Exp 5**: Server-side validation
 - **Exp 6**: JWT authentication
 - **Exp 7**: Docker containerization
-- **Exp 8**: WebSocket for real-time alerts
+- **Exp 8**: Socket.IO real-time chat
 - **Exp 9**: Docker Compose
 - **Exp 10**: GitHub Actions CI/CD
 

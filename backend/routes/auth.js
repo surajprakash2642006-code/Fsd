@@ -1,65 +1,112 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { getAsync, runAsync, allAsync } from '../db/database.js';
+import { User } from '../db/database.js';
 
 const router = express.Router();
 
-// Sign Up
+const createToken = (user) =>
+  jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    },
+    process.env.JWT_SECRET || 'fintrack-dev-secret',
+    { expiresIn: '7d' }
+  );
+
+const validateSignup = ({ name, email, password }) => {
+  const trimmedName = String(name || '').trim();
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+
+  if (!trimmedName || trimmedName.length < 2) {
+    return 'Name must be at least 2 characters long';
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return 'Please enter a valid email address';
+  }
+
+  if (!password || String(password).length < 6) {
+    return 'Password must be at least 6 characters long';
+  }
+
+  return null;
+};
+
 router.post('/signup', async (req, res) => {
   try {
     const { email, password, name } = req.body;
+    const trimmedName = String(name || '').trim();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
 
-    if (!email || !password || !name) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const validationError = validateSignup({ name, email, password });
+    if (validationError) {
+      return res.status(400).json({ success: false, error: validationError });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(409).json({ success: false, error: 'Email already registered' });
     }
 
     const userId = uuidv4();
-    await runAsync(
-      'INSERT INTO users (id, email, password, name) VALUES (?, ?, ?, ?)',
-      [userId, email, password, name]
-    );
+    const userRole = normalizedEmail === (process.env.ADMIN_EMAIL || '').toLowerCase() ? 'admin' : 'user';
+    const user = await User.create({
+      id: userId,
+      email: normalizedEmail,
+      password,
+      name: trimmedName,
+      role: userRole,
+    });
 
-    res.json({
+    const token = createToken(user);
+
+    return res.status(201).json({
       success: true,
-      user: { id: userId, email, name }
+      token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
     });
   } catch (error) {
-    if (error.message.includes('UNIQUE constraint failed')) {
-      res.status(400).json({ error: 'Email already registered' });
-    } else {
-      res.status(500).json({ error: error.message });
+    if (error?.code === 11000) {
+      return res.status(409).json({ success: false, error: 'Email already registered' });
     }
+
+    return res.status(500).json({ success: false, error: 'Server error while creating user' });
   }
 });
 
-// Sign In
 router.post('/signin', async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Missing email or password' });
+    if (!normalizedEmail || !password) {
+      return res.status(400).json({ success: false, error: 'Email and password are required' });
     }
 
-    const user = await getAsync(
-      'SELECT id, email, name FROM users WHERE email = ? AND password = ?',
-      [email, password]
-    );
-
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ success: false, error: 'Invalid email or password' });
     }
 
-    res.json({
+    const isValidPassword = await bcrypt.compare(String(password), user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ success: false, error: 'Invalid email or password' });
+    }
+
+    const token = createToken(user);
+
+    return res.json({
       success: true,
-      user
+      token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ success: false, error: 'Server error while signing in' });
   }
 });
 

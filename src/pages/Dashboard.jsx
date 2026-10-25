@@ -4,6 +4,7 @@ import BudgetCard from '../components/BudgetCard'
 import TransactionForm from '../components/TransactionForm'
 import TransactionList from '../components/TransactionList'
 import BudgetStatus from '../components/BudgetStatus'
+import Chat from '../components/Chat'
 import './Dashboard.css'
 
 export default function Dashboard({ user, onLogout }) {
@@ -45,6 +46,12 @@ export default function Dashboard({ user, onLogout }) {
           onClick={() => setActiveTab('budgets')}
         >
           📈 Budgets
+        </button>
+        <button
+          className={`nav-tab ${activeTab === 'chat' ? 'active' : ''}`}
+          onClick={() => setActiveTab('chat')}
+        >
+          💬 Live Chat
         </button>
       </nav>
 
@@ -138,6 +145,13 @@ export default function Dashboard({ user, onLogout }) {
               <div className="budget-grid">
                 <BudgetStatus detailed={true} />
               </div>
+            </div>
+          )}
+
+          {activeTab === 'chat' && (
+            <div className="tab-content">
+              <h2>Real-time Chat</h2>
+              <Chat username={user.name} />
             </div>
           )}
         </main>

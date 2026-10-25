@@ -1,55 +1,92 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { getAsync, runAsync, allAsync } from '../db/database.js';
+import { Transaction } from '../db/database.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Get all transactions for user
+router.use(authenticateToken);
+
+const assertUserAccess = (req, userId) => {
+  if (req.user.role === 'admin' || req.user.id === userId) {
+    return true;
+  }
+
+  return false;
+};
+
 router.get('/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const transactions = await allAsync(
-      'SELECT * FROM transactions WHERE userId = ? ORDER BY date DESC',
-      [userId]
-    );
-    res.json(transactions);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
-// Add transaction
-router.post('/', async (req, res) => {
-  try {
-    const { userId, type, category, amount, note, date } = req.body;
-
-    if (!userId || !type || !category || amount === undefined || !date) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!assertUserAccess(req, userId)) {
+      return res.status(403).json({ error: 'Forbidden: you can only access your own transactions' });
     }
 
-    const id = uuidv4();
-    await runAsync(
-      'INSERT INTO transactions (id, userId, type, category, amount, note, date) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, userId, type, category, amount, note || '', date]
-    );
-
-    res.json({
-      success: true,
-      transaction: { id, userId, type, category, amount, note, date }
-    });
+    const transactions = await Transaction.find({ userId }).sort({ date: -1 });
+    return res.json(transactions.map((transaction) => ({ ...transaction.toObject() })));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
-// Delete transaction
+router.post('/', async (req, res) => {
+  try {
+    const { type, category, amount, note, date } = req.body;
+    const userId = req.user.id;
+
+    if (!type || !['income', 'expense'].includes(type)) {
+      return res.status(400).json({ error: 'Transaction type must be income or expense' });
+    }
+
+    if (!category || String(category).trim().length < 2) {
+      return res.status(400).json({ error: 'Category is required' });
+    }
+
+    if (amount === undefined || Number(amount) <= 0) {
+      return res.status(400).json({ error: 'Amount must be greater than zero' });
+    }
+
+    if (!date) {
+      return res.status(400).json({ error: 'Date is required' });
+    }
+
+    const transaction = await Transaction.create({
+      id: uuidv4(),
+      userId,
+      type,
+      category: String(category).trim(),
+      amount: Number(amount),
+      note: note ? String(note).trim() : '',
+      date: new Date(date),
+    });
+
+    return res.json({
+      success: true,
+      transaction: { ...transaction.toObject() },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await runAsync('DELETE FROM transactions WHERE id = ?', [id]);
-    res.json({ success: true });
+    const transaction = await Transaction.findOne({ id });
+
+    if (!transaction) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+
+    if (req.user.role !== 'admin' && transaction.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden: you can only delete your own transactions' });
+    }
+
+    await Transaction.deleteOne({ id });
+    return res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 

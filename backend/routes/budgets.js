@@ -1,74 +1,121 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { getAsync, runAsync, allAsync } from '../db/database.js';
+import { Budget, Transaction } from '../db/database.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Get budgets for user
+router.use(authenticateToken);
+
+const assertUserAccess = (req, userId) => {
+  if (req.user.role === 'admin' || req.user.id === userId) {
+    return true;
+  }
+
+  return false;
+};
+
 router.get('/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const budgets = await allAsync(
-      'SELECT * FROM budgets WHERE userId = ? ORDER BY createdAt DESC',
-      [userId]
-    );
-    res.json(budgets);
+
+    if (!assertUserAccess(req, userId)) {
+      return res.status(403).json({ error: 'Forbidden: you can only access your own budgets' });
+    }
+
+    const budgets = await Budget.find({ userId }).sort({ createdAt: -1 });
+    return res.json(budgets.map((budget) => ({ ...budget.toObject() })));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
-// Get monthly spending for user
 router.get('/:userId/spending/:month/:year', async (req, res) => {
   try {
     const { userId, month, year } = req.params;
-    const spending = await allAsync(`
-      SELECT category, SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as spent
-      FROM transactions
-      WHERE userId = ? AND strftime('%m', date) = ? AND strftime('%Y', date) = ?
-      GROUP BY category
-    `, [userId, String(month).padStart(2, '0'), year]);
+
+    if (!assertUserAccess(req, userId)) {
+      return res.status(403).json({ error: 'Forbidden: you can only access your own budget spending' });
+    }
+
+    const monthNumber = Number(month);
+    const yearNumber = Number(year);
+
+    if (Number.isNaN(monthNumber) || Number.isNaN(yearNumber) || monthNumber < 1 || monthNumber > 12) {
+      return res.status(400).json({ error: 'Month and year must be valid numbers' });
+    }
+
+    const spending = await Transaction.aggregate([
+      {
+        $match: {
+          userId,
+          type: 'expense',
+          date: {
+            $gte: new Date(yearNumber, monthNumber - 1, 1),
+            $lt: new Date(yearNumber, monthNumber, 1),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: '$category',
+          spent: { $sum: '$amount' },
+        },
+      },
+    ]);
 
     const result = {};
-    spending.forEach(row => {
-      result[row.category] = row.spent || 0;
+    spending.forEach((row) => {
+      result[row._id] = row.spent || 0;
     });
-    res.json(result);
+
+    return res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
-// Create or update budget
 router.post('/', async (req, res) => {
   try {
-    const { userId, category, monthlyLimit, month, year } = req.body;
+    const { category, monthlyLimit, month, year } = req.body;
+    const userId = req.user.id;
 
-    if (!userId || !category || monthlyLimit === undefined || month === undefined || year === undefined) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!category || String(category).trim().length < 2) {
+      return res.status(400).json({ error: 'Category is required' });
     }
 
-    const existing = await getAsync(
-      'SELECT id FROM budgets WHERE userId = ? AND category = ? AND month = ? AND year = ?',
-      [userId, category, month, year]
-    );
+    if (monthlyLimit === undefined || Number(monthlyLimit) <= 0) {
+      return res.status(400).json({ error: 'Monthly limit must be greater than zero' });
+    }
+
+    if (month === undefined || year === undefined) {
+      return res.status(400).json({ error: 'Month and year are required' });
+    }
+
+    const existing = await Budget.findOne({ userId, category: String(category).trim(), month: Number(month), year: Number(year) });
 
     if (existing) {
-      await runAsync(
-        'UPDATE budgets SET monthlyLimit = ? WHERE id = ?',
-        [monthlyLimit, existing.id]
-      );
-      res.json({ success: true, id: existing.id });
-    } else {
-      const id = uuidv4();
-      await runAsync(
-        'INSERT INTO budgets (id, userId, category, monthlyLimit, month, year) VALUES (?, ?, ?, ?, ?, ?)',
-        [id, userId, category, monthlyLimit, month, year]
-      );
-      res.json({ success: true, id });
+      existing.monthlyLimit = Number(monthlyLimit);
+      await existing.save();
+      return res.json({ success: true, id: existing.id });
     }
+
+    const budget = await Budget.create({
+      id: uuidv4(),
+      userId,
+      category: String(category).trim(),
+      monthlyLimit: Number(monthlyLimit),
+      month: Number(month),
+      year: Number(year),
+    });
+
+    return res.json({ success: true, id: budget.id });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error?.code === 11000) {
+      return res.status(400).json({ error: 'Budget already exists for this month' });
+    }
+
+    return res.status(500).json({ error: error.message });
   }
 });
 

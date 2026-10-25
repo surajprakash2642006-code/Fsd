@@ -1,14 +1,16 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useContext } from 'react'
 import { useTransactions } from '../hooks/useBudget'
+import BudgetContext from '../context/BudgetContext'
 import './TransactionForm.css'
 
 export default function TransactionForm({ onClose }) {
   // Use React Hooks (Experiment 2)
   const { addTransaction } = useTransactions()
+  const { getExpenseCategories, getIncomeCategories } = useContext(BudgetContext)
 
   const [formData, setFormData] = useState({
     type: 'expense',
-    category: 'Food',
+    category: '',
     amount: '',
     note: '',
     date: new Date().toISOString().split('T')[0],
@@ -16,11 +18,18 @@ export default function TransactionForm({ onClose }) {
 
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [customCategory, setCustomCategory] = useState('')
+  const [useCustomCategory, setUseCustomCategory] = useState(false)
 
-  const categories = {
+  // Default categories
+  const defaultCategories = {
     income: ['Salary', 'Freelance', 'Investment', 'Bonus', 'Other'],
     expense: ['Food', 'Rent', 'Travel', 'Shopping', 'Entertainment', 'Bills', 'Other'],
   }
+
+  // Get dynamic categories or fall back to defaults
+  const expenseCategories = getExpenseCategories() || defaultCategories.expense
+  const incomeCategories = getIncomeCategories() || defaultCategories.income
 
   // Handle input changes with useCallback to optimize re-renders
   const handleChange = useCallback((e) => {
@@ -28,11 +37,24 @@ export default function TransactionForm({ onClose }) {
 
     // Reset category when changing type
     if (name === 'type') {
+      const catList = value === 'income' ? incomeCategories : expenseCategories
       setFormData((prev) => ({
         ...prev,
         [name]: value,
-        category: categories[value][0],
+        category: catList.length > 0 ? catList[0] : '',
       }))
+      setUseCustomCategory(false)
+      setCustomCategory('')
+    } else if (name === 'category') {
+      if (value === 'custom') {
+        setUseCustomCategory(true)
+      } else {
+        setUseCustomCategory(false)
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+        }))
+      }
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -44,7 +66,7 @@ export default function TransactionForm({ onClose }) {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }))
     }
-  }, [errors])
+  }, [errors, expenseCategories, incomeCategories])
 
   // Validation function
   const validateForm = useCallback(() => {
@@ -52,10 +74,6 @@ export default function TransactionForm({ onClose }) {
 
     if (!formData.amount || isNaN(formData.amount) || parseFloat(formData.amount) <= 0) {
       newErrors.amount = 'Please enter a valid positive amount'
-    }
-
-    if (!formData.category) {
-      newErrors.category = 'Please select a category'
     }
 
     if (!formData.date) {
@@ -73,7 +91,12 @@ export default function TransactionForm({ onClose }) {
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault()
+      const finalCategory = useCustomCategory ? customCategory : formData.category
       const newErrors = validateForm()
+
+      if (!finalCategory.trim()) {
+        newErrors.category = 'Please select or enter a category'
+      }
 
       if (Object.keys(newErrors).length === 0) {
         setIsSubmitting(true)
@@ -83,20 +106,23 @@ export default function TransactionForm({ onClose }) {
 
           addTransaction({
             type: formData.type,
-            category: formData.category,
+            category: finalCategory.trim(),
             amount: parseFloat(formData.amount),
             note: formData.note,
             date: formData.date,
           })
 
           // Reset form
+          const defaultCat = formData.type === 'income' ? incomeCategories[0] : expenseCategories[0]
           setFormData({
             type: 'expense',
-            category: 'Food',
+            category: defaultCat || '',
             amount: '',
             note: '',
             date: new Date().toISOString().split('T')[0],
           })
+          setCustomCategory('')
+          setUseCustomCategory(false)
 
           // Close form after short delay for user feedback
           setTimeout(() => {
@@ -109,7 +135,7 @@ export default function TransactionForm({ onClose }) {
         setErrors(newErrors)
       }
     },
-    [formData, validateForm, addTransaction, onClose]
+    [formData, validateForm, addTransaction, onClose, customCategory, useCustomCategory, incomeCategories, expenseCategories]
   )
 
   return (
@@ -144,19 +170,44 @@ export default function TransactionForm({ onClose }) {
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="category">Category</label>
-            <select
-              id="category"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className={errors.category ? 'error' : ''}
-            >
-              {categories[formData.type].map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+            {useCustomCategory ? (
+              <div className="custom-category-input">
+                <input
+                  type="text"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  placeholder="Enter custom category"
+                  autoFocus
+                  className="custom-input"
+                />
+                <button
+                  type="button"
+                  className="use-existing-btn"
+                  onClick={() => {
+                    setUseCustomCategory(false)
+                    setCustomCategory('')
+                  }}
+                >
+                  Use Existing
+                </button>
+              </div>
+            ) : (
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className={errors.category ? 'error' : ''}
+              >
+                <option value="">Select Category</option>
+                {(formData.type === 'income' ? incomeCategories : expenseCategories).map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+                <option value="custom">+ Add Custom Category</option>
+              </select>
+            )}
             {errors.category && <span className="error-text">{errors.category}</span>}
           </div>
 

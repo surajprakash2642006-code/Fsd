@@ -58,7 +58,7 @@ export default function Login({ onLogin }) {
         if (!response.ok) {
           setErrors({ form: data.error || 'Authentication failed' })
         } else {
-          onLogin(data.user)
+          onLogin({ ...data.user, token: data.token })
         }
       } catch (error) {
         setErrors({ form: 'Network error. Make sure backend is running on port 5000.' })

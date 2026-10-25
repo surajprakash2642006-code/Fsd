@@ -2,17 +2,6 @@ import { useState, useCallback } from 'react'
 import { useBudgetStatus } from '../hooks/useBudget'
 import './BudgetStatus.css'
 
-const CATEGORIES = [
-  { name: 'Food', icon: '🍔', defaultLimit: 5000 },
-  { name: 'Rent', icon: '🏠', defaultLimit: 15000 },
-  { name: 'Travel', icon: '✈️', defaultLimit: 3000 },
-  { name: 'Shopping', icon: '🛍️', defaultLimit: 4000 },
-  { name: 'Entertainment', icon: '🎬', defaultLimit: 2000 },
-  { name: 'Utilities', icon: '💡', defaultLimit: 2000 },
-  { name: 'Healthcare', icon: '🏥', defaultLimit: 3000 },
-  { name: 'Education', icon: '📚', defaultLimit: 5000 },
-]
-
 export default function BudgetStatus({ detailed = false }) {
   const { budgets, getBudgetStatus, updateBudget } = useBudgetStatus()
   const budgetStatus = getBudgetStatus()
@@ -42,8 +31,8 @@ export default function BudgetStatus({ detailed = false }) {
   )
 
   const handleAddBudget = useCallback(() => {
-    if (newBudgetData.category && parseFloat(newBudgetData.limit) > 0) {
-      updateBudget(newBudgetData.category, parseFloat(newBudgetData.limit))
+    if (newBudgetData.category.trim() && parseFloat(newBudgetData.limit) > 0) {
+      updateBudget(newBudgetData.category.trim(), parseFloat(newBudgetData.limit))
       setNewBudgetData({ category: '', limit: '' })
       setShowNewBudgetForm(false)
     }
@@ -64,13 +53,28 @@ export default function BudgetStatus({ detailed = false }) {
   }
 
   const getCategoryIcon = (category) => {
-    const cat = CATEGORIES.find(c => c.name === category)
-    return cat ? cat.icon : '💰'
+    const iconMap = {
+      'Food': '🍔',
+      'Rent': '🏠',
+      'Travel': '✈️',
+      'Shopping': '🛍️',
+      'Entertainment': '🎬',
+      'Utilities': '💡',
+      'Healthcare': '🏥',
+      'Education': '📚',
+      'Salary': '💵',
+      'Freelance': '💻',
+      'Investment': '📈',
+      'Bonus': '🎁',
+      'Bills': '📄',
+      'Other': '💰',
+    }
+    return iconMap[category] || '💰'
   }
 
   const getAvailableCategories = () => {
     const usedCategories = budgetStatus.map(b => b.category)
-    return CATEGORIES.filter(c => !usedCategories.includes(c.name))
+    return usedCategories
   }
 
   return (
@@ -192,20 +196,17 @@ export default function BudgetStatus({ detailed = false }) {
             <div className="new-budget-form">
               <h3>Create New Budget</h3>
               <div className="form-group">
-                <label>Category</label>
-                <select
+                <label>Category Name</label>
+                <input
+                  type="text"
                   value={newBudgetData.category}
                   onChange={(e) =>
                     setNewBudgetData({ ...newBudgetData, category: e.target.value })
                   }
-                >
-                  <option value="">Select Category</option>
-                  {getAvailableCategories().map((cat) => (
-                    <option key={cat.name} value={cat.name}>
-                      {cat.icon} {cat.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="e.g., Food, Rent, Education, etc."
+                  autoFocus
+                />
+                <small className="form-hint">Create a budget for any category you want to track</small>
               </div>
 
               <div className="form-group">
@@ -221,19 +222,11 @@ export default function BudgetStatus({ detailed = false }) {
                 />
               </div>
 
-              {newBudgetData.category && (
-                <div className="default-suggestion">
-                  Suggested limit: {formatAmount(
-                    CATEGORIES.find(c => c.name === newBudgetData.category)?.defaultLimit || 0
-                  )}
-                </div>
-              )}
-
               <div className="form-actions">
                 <button
                   className="create-btn"
                   onClick={handleAddBudget}
-                  disabled={!newBudgetData.category || !newBudgetData.limit}
+                  disabled={!newBudgetData.category.trim() || !newBudgetData.limit}
                 >
                   Create Budget
                 </button>
