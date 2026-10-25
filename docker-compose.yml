@@ -30,7 +30,7 @@ services:
 
   frontend:
     build:
-      context: .
+      context: ./frontend
     container_name: fintrack-frontend
     restart: unless-stopped
     ports:

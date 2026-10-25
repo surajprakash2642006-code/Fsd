@@ -28,7 +28,7 @@ Built across **Experiments 1-4** with React, Tailwind CSS, Context API, and Expr
 
 ```bash
 # Install dependencies
-npm install
+cd frontend && npm install && cd ..
 cd backend && npm install && cd ..
 
 # Terminal 1: Start Backend
@@ -37,6 +37,7 @@ npm start
 # Expected: "🚀 Server running on http://localhost:5000"
 
 # Terminal 2: Start Frontend
+cd frontend
 npm run dev
 # Expected: "➜ Local: http://localhost:5173/"
 
@@ -331,7 +332,9 @@ cd Budget-Tracker
 
 ### Step 2: Install Frontend Dependencies
 ```bash
+cd frontend
 npm install
+cd ..
 ```
 
 **Expected output:**
@@ -385,6 +388,7 @@ Expected output:
 
 **Terminal 2 - Frontend Development Server:**
 ```bash
+cd frontend
 npm run dev
 ```
 
@@ -405,7 +409,7 @@ cd backend && npm install && npm start
 
 **Terminal 2:**
 ```bash
-npm install && npm run dev
+cd frontend && npm install && npm run dev
 ```
 
 ### Access the Application
@@ -697,49 +701,24 @@ CREATE TABLE budgets (
 
 ### Frontend Structure
 ```
-src/
-├── main.jsx                           # React entry point
-├── App.jsx                            # Main App component
-├── App.css                            # Global styles
-│
-├── pages/
-│   ├── Login.jsx                      # Login/Signup page (Exp 1, 4)
-│   ├── Login.css                      # Login styles & animations
-│   ├── Dashboard.jsx                  # Main dashboard (Exp 1, 2, 3)
-│   └── Dashboard.css                  # Dashboard styles & tabs
-│
-├── components/
-│   ├── BudgetCard.jsx                 # Summary card component (Exp 1)
-│   ├── BudgetCard.css
-│   ├── TransactionForm.jsx            # Add transaction form (Exp 2)
-│   ├── TransactionForm.css
-│   ├── TransactionList.jsx            # Transaction list (Exp 2)
-│   ├── TransactionList.css
-│   ├── BudgetStatus.jsx               # Budget tracking (Exp 3)
-│   └── BudgetStatus.css
-│
-├── context/                           # Global state (Exp 3, 4)
-│   ├── AuthContext.jsx                # User authentication context
-│   └── BudgetContext.jsx              # Budget and transaction context
-│
-├── hooks/                             # Custom React Hooks (Exp 2)
-│   └── useBudget.js
-│
-└── assets/                            # Static files
-    ├── vite.svg
-    ├── javascript.svg
-    └── hero.png
-
-Root:
+frontend/
 ├── index.html                         # HTML entry point
-├── package.json                       # Frontend dependencies
+├── package.json                       # Frontend dependencies and scripts
+├── package-lock.json                  # Locked frontend dependencies
 ├── vite.config.js                     # Vite configuration
-├── tailwind.config.js                 # Tailwind CSS config
-├── README.md                          # Full documentation
-├── GETTING_STARTED.md                 # Setup guide
-├── QUICK_REFERENCE.md                 # Quick reference
-├── EXP4_QUICKSTART.md                 # Exp 4 quick start
-└── EXP4_SUMMARY.md                    # Exp 4 detailed summary
+├── Dockerfile                         # Frontend container
+├── public/                            # Static assets
+└── src/                               # React application
+    ├── main.jsx                       # React entry point
+    ├── App.jsx                        # Main app component
+    ├── pages/                         # Login and dashboard
+    ├── components/                    # UI, including Live Chat
+    ├── context/                       # Authentication and budget state
+    └── hooks/                          # Custom React hooks
+
+backend/                               # Express API and MongoDB models
+docker-compose.yml                     # Full-stack local orchestration
+.github/workflows/ci.yml               # GitHub Actions checks
 ```
 
 ### Backend Structure

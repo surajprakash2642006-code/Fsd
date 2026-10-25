@@ -3,6 +3,7 @@
 ## 🎬 How to Run
 
 ```bash
+cd frontend
 npm install
 npm run dev           # Dev server on http://localhost:5173/
 npm run build         # Production build
@@ -12,7 +13,7 @@ npm run preview       # Preview production build
 ## 📋 File-to-Feature Mapping
 
 ### Authentication (Exp 1: Tailwind CSS)
-- **File**: `src/pages/Login.jsx` + `Login.css`
+- **File**: `frontend/src/pages/Login.jsx` + `Login.css`
 - **Features**: 
   - Sign In/Sign Up toggle
   - Form validation
@@ -20,7 +21,7 @@ npm run preview       # Preview production build
   - 2-column responsive layout
 
 ### Dashboard (Exp 1: Tailwind CSS + Exp 2: Hooks + Exp 3: Context)
-- **File**: `src/pages/Dashboard.jsx` + `Dashboard.css`
+- **File**: `frontend/src/pages/Dashboard.jsx` + `Dashboard.css`
 - **Tabs**:
   - Overview: Summary cards
   - Transactions: Transaction list
@@ -28,7 +29,7 @@ npm run preview       # Preview production build
 - **Styling**: Responsive grid, animated tabs
 
 ### Summary Cards (Exp 1: Tailwind)
-- **File**: `src/components/BudgetCard.jsx` + `.css`
+- **File**: `frontend/src/components/BudgetCard.jsx` + `.css`
 - **Props**: title, amount, icon, color, trend
 - **Styling**: Gradient backgrounds, hover effects
 

@@ -8,7 +8,7 @@
 
 ### Step 1: Navigate to project directory
 ```bash
-cd Budget-Tracker
+cd Budget-Tracker/frontend
 ```
 
 ### Step 2: Install dependencies
@@ -219,6 +219,7 @@ npm install @vitejs/plugin-react
 
 ### Create optimized build
 ```bash
+cd frontend
 npm run build
 ```
 
@@ -234,6 +235,7 @@ dist/
 
 ### Preview production build
 ```bash
+cd frontend
 npm run preview
 ```
 
