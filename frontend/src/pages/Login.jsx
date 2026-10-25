@@ -77,7 +77,7 @@ export default function Login({ onLogin }) {
         <div className="login-branding">
           <div className="branding-content">
             <div className="branding-icon">💰</div>
-            <h1>FinTrick</h1>
+            <h1>Fin</h1>
             <p>Your Personal Finance Companion</p>
             <div className="branding-features">
               <div className="feature">✓ Track Expenses</div>
