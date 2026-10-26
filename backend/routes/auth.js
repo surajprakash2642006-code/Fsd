@@ -106,6 +106,7 @@ router.post('/signin', async (req, res) => {
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     });
   } catch (error) {
+    console.error('Sign-in failed:', error.message);
     return res.status(500).json({ success: false, error: 'Server error while signing in' });
   }
 });

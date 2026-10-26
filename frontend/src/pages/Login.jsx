@@ -52,7 +52,13 @@ export default function Login({ onLogin }) {
           body: JSON.stringify(payload),
         })
 
-        const data = await response.json()
+        const responseBody = await response.text()
+        let data
+        try {
+          data = JSON.parse(responseBody)
+        } catch {
+          throw new Error(`Backend returned an invalid response (HTTP ${response.status}) at ${API_BASE_URL}/auth/${endpoint}`)
+        }
 
         if (!response.ok) {
           setErrors({ form: data.error || 'Authentication failed' })
@@ -61,7 +67,11 @@ export default function Login({ onLogin }) {
         }
       } catch (error) {
         console.error('Authentication request failed:', error)
-        setErrors({ form: `Can't reach the backend at ${API_BASE_URL}. Check your connection and backend deployment.` })
+        setErrors({
+          form: error instanceof TypeError
+            ? `Can't reach the backend at ${API_BASE_URL}. Check your connection and backend deployment.`
+            : error.message,
+        })
       } finally {
         setLoading(false)
       }
