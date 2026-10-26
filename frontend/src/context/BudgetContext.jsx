@@ -148,10 +148,18 @@ export function BudgetProvider({ children }) {
         Authorization: `Bearer ${user.token}`,
       },
     })
-    const data = await response.json()
+    const responseBody = await response.text()
+    let data
+    try {
+      data = JSON.parse(responseBody)
+    } catch {
+      throw new Error(
+        `Budget removal failed (HTTP ${response.status}). Redeploy the backend with the budget-delete route.`
+      )
+    }
 
     if (!response.ok || !data.success) {
-      throw new Error(data.error || 'Failed to delete budget.')
+      throw new Error(data.error || `Budget removal failed (HTTP ${response.status}).`)
     }
 
     await fetchBudgets()
