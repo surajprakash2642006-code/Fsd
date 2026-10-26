@@ -1,0 +1,22 @@
+const isLocalDevelopment =
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+
+const productionBackendUrl = 'https://fsd-hqeo.onrender.com'
+const localBackendUrl = 'http://localhost:5000'
+
+const isLocalUrl = (url) => /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(?=\/|$)/i.test(url)
+const configuredApiUrl = import.meta.env.VITE_API_URL
+const configuredSocketUrl = import.meta.env.VITE_SOCKET_URL
+
+export const API_BASE_URL =
+  (configuredApiUrl && (isLocalDevelopment || !isLocalUrl(configuredApiUrl))
+    ? configuredApiUrl
+    : `${isLocalDevelopment ? localBackendUrl : productionBackendUrl}/api`)
+
+export const SOCKET_URL =
+  (configuredSocketUrl && (isLocalDevelopment || !isLocalUrl(configuredSocketUrl))
+    ? configuredSocketUrl
+    : isLocalDevelopment
+      ? localBackendUrl
+      : productionBackendUrl)

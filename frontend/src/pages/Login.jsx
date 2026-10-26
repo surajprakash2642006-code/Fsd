@@ -1,7 +1,6 @@
 import { useState } from 'react'
+import { API_BASE_URL } from '../config/api'
 import './Login.css'
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 export default function Login({ onLogin }) {
   const [isSignup, setIsSignup] = useState(false)
@@ -61,7 +60,8 @@ export default function Login({ onLogin }) {
           onLogin({ ...data.user, token: data.token })
         }
       } catch (error) {
-        setErrors({ form: 'Network error. Make sure backend is running on port 5000.' })
+        console.error('Authentication request failed:', error)
+        setErrors({ form: `Can't reach the backend at ${API_BASE_URL}. Check your connection and backend deployment.` })
       } finally {
         setLoading(false)
       }

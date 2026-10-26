@@ -1,8 +1,8 @@
 import { createContext, useState, useCallback, useEffect, useContext } from 'react'
 import AuthContext from './AuthContext'
+import { API_BASE_URL } from '../config/api'
 
 const BudgetContext = createContext()
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 export function BudgetProvider({ children }) {
   const { user } = useContext(AuthContext)
