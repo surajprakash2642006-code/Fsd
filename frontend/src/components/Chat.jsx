@@ -6,7 +6,7 @@ const SOCKET_URL =
   import.meta.env.VITE_SOCKET_URL ||
   `${window.location.protocol}//${window.location.hostname}:5000`
 
-export default function Chat({ username }) {
+export default function Chat({ username, token }) {
   const [messages, setMessages] = useState([])
   const [message, setMessage] = useState('')
   const [connection, setConnection] = useState('connecting')
@@ -15,7 +15,7 @@ export default function Chat({ username }) {
   const socketRef = useRef(null)
 
   useEffect(() => {
-    const socket = io(SOCKET_URL, { autoConnect: false })
+    const socket = io(SOCKET_URL, { autoConnect: false, auth: { token } })
     socketRef.current = socket
 
     socket.on('connect', () => {
@@ -37,7 +37,7 @@ export default function Chat({ username }) {
       socket.disconnect()
       socketRef.current = null
     }
-  }, [])
+  }, [token])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

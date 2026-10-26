@@ -56,15 +56,19 @@ export function BudgetProvider({ children }) {
     }
   }, [user])
 
+  const refreshData = useCallback(
+    () => Promise.all([fetchTransactions(), fetchBudgets()]),
+    [fetchTransactions, fetchBudgets]
+  )
+
   useEffect(() => {
     if (user) {
-      fetchTransactions()
-      fetchBudgets()
+      refreshData()
     } else {
       setTransactions([])
       setBudgets([])
     }
-  }, [user, fetchTransactions, fetchBudgets])
+  }, [user, refreshData])
 
   const addTransaction = useCallback(async (transaction) => {
     if (!user || !user.id || !user.token) return
@@ -153,20 +157,21 @@ export function BudgetProvider({ children }) {
 
   const getBudgetStatus = useCallback(() => {
     const spending = getMonthlySpending()
-    return budgets.map((budget) => {
-      const spent = spending[budget.category] || 0
-      const remaining = budget.monthlyLimit - spent
-      return {
-        ...budget,
-        spent,
-        remaining: remaining > 0 ? remaining : 0,
-        percentage: Math.round(
-          ((spent / budget.monthlyLimit) * 100)
-        ),
-        isWarning: spent / budget.monthlyLimit >= 0.8,
-        isOver: spent > budget.monthlyLimit,
-      }
-    })
+    const now = new Date()
+    return budgets
+      .filter((budget) => budget.month === now.getMonth() + 1 && budget.year === now.getFullYear())
+      .map((budget) => {
+        const spent = spending[budget.category] || 0
+        const remaining = budget.monthlyLimit - spent
+        return {
+          ...budget,
+          spent,
+          remaining: remaining > 0 ? remaining : 0,
+          percentage: Math.round((spent / budget.monthlyLimit) * 100),
+          isWarning: spent / budget.monthlyLimit >= 0.8,
+          isOver: spent > budget.monthlyLimit,
+        }
+      })
   }, [budgets, getMonthlySpending])
 
   const getMonthlyTotals = useCallback(() => {
@@ -249,6 +254,7 @@ export function BudgetProvider({ children }) {
     getAllCategories,
     getExpenseCategories,
     getIncomeCategories,
+    refreshData,
     loading,
   }
 

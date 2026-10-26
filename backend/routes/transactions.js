@@ -51,6 +51,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Date is required' });
     }
 
+    const transactionDate = new Date(date);
     const transaction = await Transaction.create({
       id: uuidv4(),
       userId,
@@ -58,8 +59,11 @@ router.post('/', async (req, res) => {
       category: String(category).trim(),
       amount: Number(amount),
       note: note ? String(note).trim() : '',
-      date: new Date(date),
+      date: transactionDate,
     });
+
+    const io = req.app.get('io');
+    io.to(`user:${userId}`).emit('data:changed');
 
     return res.json({
       success: true,
@@ -84,6 +88,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     await Transaction.deleteOne({ id });
+    req.app.get('io').to(`user:${transaction.userId}`).emit('data:changed');
     return res.json({ success: true });
   } catch (error) {
     return res.status(500).json({ error: error.message });

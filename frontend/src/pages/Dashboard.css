@@ -117,6 +117,9 @@
 }
 
 .dashboard-main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
   animation: fadeInUp 0.6s ease-out;
 }
 
@@ -163,6 +166,12 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
+}
+
+.budget-preview-section,
+.summary-section {
+  display: flex;
+  flex-direction: column;
 }
 
 /* Quick Actions */

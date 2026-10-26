@@ -34,6 +34,14 @@
   background: rgba(245, 101, 101, 0.02);
 }
 
+.budget-item.warning .percentage {
+  color: #c05621;
+}
+
+.budget-item.over .percentage {
+  color: #c53030;
+}
+
 /* Header */
 .budget-header {
   display: flex;

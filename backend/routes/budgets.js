@@ -97,6 +97,7 @@ router.post('/', async (req, res) => {
     if (existing) {
       existing.monthlyLimit = Number(monthlyLimit);
       await existing.save();
+      req.app.get('io').to(`user:${userId}`).emit('data:changed');
       return res.json({ success: true, id: existing.id });
     }
 
@@ -109,6 +110,7 @@ router.post('/', async (req, res) => {
       year: Number(year),
     });
 
+    req.app.get('io').to(`user:${userId}`).emit('data:changed');
     return res.json({ success: true, id: budget.id });
   } catch (error) {
     if (error?.code === 11000) {

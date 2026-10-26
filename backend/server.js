@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 import { Server } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { initializeDatabase } from './db/database.js';
@@ -19,6 +20,25 @@ const PORT = process.env.PORT || 5000;
 const io = new Server(server, {
   cors: { origin: true, credentials: true },
   maxHttpBufferSize: 1e4,
+});
+app.set('io', io);
+
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (typeof token !== 'string' || !token) {
+    return next(new Error('Authentication required'));
+  }
+
+  try {
+    const user = jwt.verify(token, process.env.JWT_SECRET || 'fintrack-dev-secret');
+    if (!user || typeof user !== 'object' || typeof user.id !== 'string') {
+      return next(new Error('Invalid authentication token'));
+    }
+    socket.data.user = user;
+    return next();
+  } catch {
+    return next(new Error('Invalid or expired token'));
+  }
 });
 
 const apiLimiter = rateLimit({
@@ -48,7 +68,7 @@ app.get('/health', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log(`Chat client connected: ${socket.id}`);
+  socket.join(`user:${socket.data.user.id}`);
 
   socket.on('chat:send', (payload) => {
     if (!payload || typeof payload !== 'object') {

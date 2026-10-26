@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { useMonthlyTotals } from '../hooks/useBudget'
+import { useMonthlyTotals, useTransactions } from '../hooks/useBudget'
 import BudgetCard from '../components/BudgetCard'
+import SpendingCharts from '../components/SpendingCharts'
+import RealTimeAlerts from '../components/RealTimeAlerts'
 import TransactionForm from '../components/TransactionForm'
 import TransactionList from '../components/TransactionList'
 import BudgetStatus from '../components/BudgetStatus'
@@ -11,6 +13,7 @@ export default function Dashboard({ user, onLogout }) {
   const [showAddForm, setShowAddForm] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
   const totals = useMonthlyTotals()
+  const { transactions } = useTransactions()
 
   return (
     <div className="dashboard">
@@ -58,6 +61,8 @@ export default function Dashboard({ user, onLogout }) {
       <div className="dashboard-container">
         {/* Main Content */}
         <main className="dashboard-main">
+          <RealTimeAlerts token={user.token} />
+
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="tab-content">
@@ -87,6 +92,8 @@ export default function Dashboard({ user, onLogout }) {
                   />
                 </div>
               </div>
+
+              <SpendingCharts transactions={transactions} totals={totals} />
 
               {/* Quick Actions */}
               <div className="quick-actions">
@@ -151,7 +158,7 @@ export default function Dashboard({ user, onLogout }) {
           {activeTab === 'chat' && (
             <div className="tab-content">
               <h2>Real-time Chat</h2>
-              <Chat username={user.name} />
+              <Chat username={user.name} token={user.token} />
             </div>
           )}
         </main>

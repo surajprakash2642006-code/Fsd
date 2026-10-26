@@ -105,6 +105,9 @@ export default function BudgetStatus({ detailed = false }) {
                 <div className="budget-info">
                   <span className="percentage">{budget.percentage}%</span>
                   {budget.isOver && <span className="status-badge over">Over</span>}
+                  {!budget.isOver && budget.percentage >= 100 && (
+                    <span className="status-badge over">Limit reached</span>
+                  )}
                   {budget.isWarning && !budget.isOver && (
                     <span className="status-badge warning">⚠️ Warning</span>
                   )}

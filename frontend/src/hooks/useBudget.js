@@ -11,6 +11,7 @@ export function useTransactions() {
     transactions: context.transactions,
     addTransaction: context.addTransaction,
     deleteTransaction: context.deleteTransaction,
+    refreshData: context.refreshData,
   }
 }
 
@@ -22,6 +23,7 @@ export function useBudgetStatus() {
 
   return {
     budgets: context.budgets,
+    transactions: context.transactions,
     updateBudget: context.updateBudget,
     getBudgetStatus: context.getBudgetStatus,
   }

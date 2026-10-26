@@ -21,15 +21,31 @@ export default function TransactionForm({ onClose }) {
   const [customCategory, setCustomCategory] = useState('')
   const [useCustomCategory, setUseCustomCategory] = useState(false)
 
-  // Default categories
+  // Keep generic options available alongside categories already used by the user.
   const defaultCategories = {
-    income: ['Salary', 'Freelance', 'Investment', 'Bonus', 'Other'],
-    expense: ['Food', 'Rent', 'Travel', 'Shopping', 'Entertainment', 'Bills', 'Other'],
+    income: ['Salary', 'Freelance', 'Business', 'Investment', 'Bonus', 'Gift', 'Interest', 'Other'],
+    expense: [
+      'Food',
+      'Groceries',
+      'Rent',
+      'Utilities',
+      'Transport',
+      'Healthcare',
+      'Education',
+      'Travel',
+      'Shopping',
+      'Entertainment',
+      'Bills',
+      'Other',
+    ],
   }
 
-  // Get dynamic categories or fall back to defaults
-  const expenseCategories = getExpenseCategories() || defaultCategories.expense
-  const incomeCategories = getIncomeCategories() || defaultCategories.income
+  const expenseCategories = [
+    ...new Set([...defaultCategories.expense, ...getExpenseCategories()]),
+  ]
+  const incomeCategories = [
+    ...new Set([...defaultCategories.income, ...getIncomeCategories()]),
+  ]
 
   // Handle input changes with useCallback to optimize re-renders
   const handleChange = useCallback((e) => {
