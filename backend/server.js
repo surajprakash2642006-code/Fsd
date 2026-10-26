@@ -7,10 +7,11 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import { Server } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
-import { initializeDatabase } from './db/database.js';
+import { initializeDatabase, User } from './db/database.js';
 import authRoutes from './routes/auth.js';
 import transactionRoutes from './routes/transactions.js';
 import budgetRoutes from './routes/budgets.js';
+import adminRoutes from './routes/admin.js';
 
 dotenv.config();
 
@@ -49,19 +50,58 @@ const apiLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' },
 });
 
+const bootstrapAdmin = async () => {
+  const email = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  if (!email) {
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('ADMIN_EMAIL must be a valid email address');
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    let accountChanged = false;
+    if (existingUser.role !== 'admin') {
+      existingUser.role = 'admin';
+      accountChanged = true;
+    }
+    if (process.env.ADMIN_PASSWORD) {
+      existingUser.password = process.env.ADMIN_PASSWORD;
+      accountChanged = true;
+    }
+    if (accountChanged) {
+      await existingUser.save();
+      console.log(`Updated configured admin account: ${email}`);
+    }
+    return;
+  }
+
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password || password.length < 6) {
+    throw new Error('Set ADMIN_PASSWORD to at least 6 characters to create the configured admin account');
+  }
+
+  await User.create({
+    id: uuidv4(),
+    email,
+    password,
+    name: process.env.ADMIN_NAME?.trim() || 'FinTrack Admin',
+    role: 'admin',
+  });
+  console.log(`Created configured admin account: ${email}`);
+};
+
 app.use(helmet());
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 app.use('/api', apiLimiter);
 
-initializeDatabase().catch((error) => {
-  console.error('Failed to initialize database:', error.message);
-  process.exit(1);
-});
-
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'Backend API is running' });
@@ -102,6 +142,17 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, error: 'Something went wrong on the server.' });
 });
 
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await initializeDatabase();
+    await bootstrapAdmin();
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error.message);
+    process.exit(1);
+  }
+};
+
+startServer();

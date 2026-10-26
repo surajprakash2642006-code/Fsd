@@ -7,11 +7,13 @@ import TransactionForm from '../components/TransactionForm'
 import TransactionList from '../components/TransactionList'
 import BudgetStatus from '../components/BudgetStatus'
 import Chat from '../components/Chat'
+import AdminPanel from './AdminPanel'
 import './Dashboard.css'
 
 export default function Dashboard({ user, onLogout }) {
   const [showAddForm, setShowAddForm] = useState(false)
-  const [activeTab, setActiveTab] = useState('overview')
+  const isAdmin = user.role === 'admin'
+  const [activeTab, setActiveTab] = useState(isAdmin ? 'admin' : 'overview')
   const totals = useMonthlyTotals()
   const { transactions } = useTransactions()
 
@@ -32,39 +34,51 @@ export default function Dashboard({ user, onLogout }) {
 
       {/* Navigation Tabs */}
       <nav className="dashboard-nav">
-        <button
-          className={`nav-tab ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
-        >
-          📊 Overview
-        </button>
-        <button
-          className={`nav-tab ${activeTab === 'transactions' ? 'active' : ''}`}
-          onClick={() => setActiveTab('transactions')}
-        >
-          💳 Transactions
-        </button>
-        <button
-          className={`nav-tab ${activeTab === 'budgets' ? 'active' : ''}`}
-          onClick={() => setActiveTab('budgets')}
-        >
-          📈 Budgets
-        </button>
+        {!isAdmin && (
+          <>
+            <button
+              className={`nav-tab ${activeTab === 'overview' ? 'active' : ''}`}
+              onClick={() => setActiveTab('overview')}
+            >
+              📊 Overview
+            </button>
+            <button
+              className={`nav-tab ${activeTab === 'transactions' ? 'active' : ''}`}
+              onClick={() => setActiveTab('transactions')}
+            >
+              💳 Transactions
+            </button>
+            <button
+              className={`nav-tab ${activeTab === 'budgets' ? 'active' : ''}`}
+              onClick={() => setActiveTab('budgets')}
+            >
+              📈 Budgets
+            </button>
+          </>
+        )}
         <button
           className={`nav-tab ${activeTab === 'chat' ? 'active' : ''}`}
           onClick={() => setActiveTab('chat')}
         >
           💬 Live Chat
         </button>
+        {isAdmin && (
+          <button
+            className={`nav-tab ${activeTab === 'admin' ? 'active' : ''}`}
+            onClick={() => setActiveTab('admin')}
+          >
+            🛡️ Admin Panel
+          </button>
+        )}
       </nav>
 
       <div className="dashboard-container">
         {/* Main Content */}
         <main className="dashboard-main">
-          <RealTimeAlerts token={user.token} />
+          {!isAdmin && <RealTimeAlerts token={user.token} />}
 
           {/* Overview Tab */}
-          {activeTab === 'overview' && (
+          {!isAdmin && activeTab === 'overview' && (
             <div className="tab-content">
               <div className="summary-section">
                 <h2>This Month's Summary</h2>
@@ -123,7 +137,7 @@ export default function Dashboard({ user, onLogout }) {
           )}
 
           {/* Transactions Tab */}
-          {activeTab === 'transactions' && (
+          {!isAdmin && activeTab === 'transactions' && (
             <div className="tab-content">
               <div className="section-header">
                 <h2>Transaction History</h2>
@@ -146,7 +160,7 @@ export default function Dashboard({ user, onLogout }) {
           )}
 
           {/* Budgets Tab */}
-          {activeTab === 'budgets' && (
+          {!isAdmin && activeTab === 'budgets' && (
             <div className="tab-content">
               <h2>Budget Management</h2>
               <div className="budget-grid">
@@ -159,6 +173,12 @@ export default function Dashboard({ user, onLogout }) {
             <div className="tab-content">
               <h2>Real-time Chat</h2>
               <Chat username={user.name} token={user.token} />
+            </div>
+          )}
+
+          {activeTab === 'admin' && isAdmin && (
+            <div className="tab-content">
+              <AdminPanel user={user} />
             </div>
           )}
         </main>

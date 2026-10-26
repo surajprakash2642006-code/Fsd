@@ -4,6 +4,7 @@ import './Login.css'
 
 export default function Login({ onLogin }) {
   const [isSignup, setIsSignup] = useState(false)
+  const [loginRole, setLoginRole] = useState('user')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -62,6 +63,12 @@ export default function Login({ onLogin }) {
 
         if (!response.ok) {
           setErrors({ form: data.error || 'Authentication failed' })
+        } else if (!isSignup && data.user.role !== loginRole) {
+          setErrors({
+            form: loginRole === 'admin'
+              ? 'This account does not have admin access.'
+              : 'This is an admin account. Choose Admin to sign in.',
+          })
         } else {
           onLogin({ ...data.user, token: data.token })
         }
@@ -107,6 +114,32 @@ export default function Login({ onLogin }) {
 
             <form onSubmit={handleSubmit} className="login-form">
               {errors.form && <div className="error-text" style={{ marginBottom: '1rem', textAlign: 'center' }}>{errors.form}</div>}
+              {!isSignup && (
+                <div className="login-role-choice">
+                  <span className="login-role-label">Sign in as</span>
+                  <div className="login-role-options" role="group" aria-label="Choose account type">
+                    {['user', 'admin'].map((role) => (
+                      <button
+                        key={role}
+                        type="button"
+                        className={`login-role-button ${loginRole === role ? 'active' : ''}`}
+                        aria-pressed={loginRole === role}
+                        onClick={() => {
+                          setLoginRole(role)
+                          setErrors({})
+                        }}
+                      >
+                        {role === 'admin' ? '🛡️ Admin' : '👤 User'}
+                      </button>
+                    ))}
+                  </div>
+                  {loginRole === 'admin' && (
+                    <small className="login-role-hint">
+                      Admin sign-in requires an account with admin access.
+                    </small>
+                  )}
+                </div>
+              )}
               {isSignup && (
                 <div className="form-group">
                   <label htmlFor="name">Full Name</label>
@@ -171,6 +204,7 @@ export default function Login({ onLogin }) {
                 className="toggle-button"
                 onClick={() => {
                   setIsSignup(!isSignup)
+                  setLoginRole('user')
                   setFormData({ name: '', email: '', password: '' })
                   setErrors({})
                 }}
