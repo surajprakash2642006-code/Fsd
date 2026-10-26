@@ -3,7 +3,7 @@ import { useBudgetStatus } from '../hooks/useBudget'
 import './BudgetStatus.css'
 
 export default function BudgetStatus({ detailed = false }) {
-  const { budgets, getBudgetStatus, updateBudget } = useBudgetStatus()
+  const { getBudgetStatus, updateBudget, deleteBudget } = useBudgetStatus()
   const budgetStatus = getBudgetStatus()
   const [showNewBudgetForm, setShowNewBudgetForm] = useState(false)
   const [newBudgetData, setNewBudgetData] = useState({
@@ -13,6 +13,8 @@ export default function BudgetStatus({ detailed = false }) {
 
   const [editingId, setEditingId] = useState(null)
   const [editValue, setEditValue] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
+  const [actionError, setActionError] = useState('')
 
   const handleEditClick = useCallback((budget) => {
     setEditingId(budget.id)
@@ -37,6 +39,22 @@ export default function BudgetStatus({ detailed = false }) {
       setShowNewBudgetForm(false)
     }
   }, [newBudgetData, updateBudget])
+
+  const handleDeleteBudget = useCallback(async (budget) => {
+    if (!window.confirm(`Remove the ${budget.category} budget? Your transactions will not be affected.`)) {
+      return
+    }
+
+    setDeletingId(budget.id)
+    setActionError('')
+    try {
+      await deleteBudget(budget.id)
+    } catch (error) {
+      setActionError(error.message)
+    } finally {
+      setDeletingId(null)
+    }
+  }, [deleteBudget])
 
   const formatAmount = (num) => {
     return new Intl.NumberFormat('en-IN', {
@@ -81,6 +99,7 @@ export default function BudgetStatus({ detailed = false }) {
     <div className="budget-status">
       {/* Budget List */}
       <div className="budget-list">
+        {actionError && <p className="budget-action-error" role="alert">{actionError}</p>}
         {budgetStatus.length === 0 ? (
           <div className="no-budgets-message">
             <p>📋 No budgets created yet</p>
@@ -171,12 +190,21 @@ export default function BudgetStatus({ detailed = false }) {
                       </button>
                     </div>
                   ) : (
-                    <button
-                      className="edit-btn"
-                      onClick={() => handleEditClick(budget)}
-                    >
-                      ✏️ Edit Limit
-                    </button>
+                    <div className="budget-actions">
+                      <button
+                        className="edit-btn"
+                        onClick={() => handleEditClick(budget)}
+                      >
+                        ✏️ Edit Limit
+                      </button>
+                      <button
+                        className="delete-budget-btn"
+                        onClick={() => handleDeleteBudget(budget)}
+                        disabled={deletingId === budget.id}
+                      >
+                        {deletingId === budget.id ? 'Removing...' : 'Remove Budget'}
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

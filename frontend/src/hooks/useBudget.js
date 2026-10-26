@@ -25,6 +25,7 @@ export function useBudgetStatus() {
     budgets: context.budgets,
     transactions: context.transactions,
     updateBudget: context.updateBudget,
+    deleteBudget: context.deleteBudget,
     getBudgetStatus: context.getBudgetStatus,
   }
 }

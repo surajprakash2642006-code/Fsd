@@ -23,3 +23,5 @@ The dashboard includes monthly spending-by-category and income-versus-expense ch
 authenticated live updates over WebSockets, and dismissible monthly spending popups:
 yellow when expenses reach 80% of income and red at 90%. Category budget progress
 indicators warn as spending approaches their individual limits.
+Existing budgets can be edited or removed from the Budgets tab; removing a budget
+does not remove its transactions.

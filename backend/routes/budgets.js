@@ -75,6 +75,26 @@ router.get('/:userId/spending/:month/:year', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  try {
+    const budget = await Budget.findOne({ id: req.params.id });
+
+    if (!budget) {
+      return res.status(404).json({ error: 'Budget not found' });
+    }
+
+    if (req.user.role !== 'admin' && budget.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden: you can only delete your own budgets' });
+    }
+
+    await Budget.deleteOne({ id: budget.id });
+    req.app.get('io').to(`user:${budget.userId}`).emit('data:changed');
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
     const { category, monthlyLimit, month, year } = req.body;

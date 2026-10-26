@@ -137,6 +137,26 @@ export function BudgetProvider({ children }) {
     }
   }, [user, fetchBudgets])
 
+  const deleteBudget = useCallback(async (id) => {
+    if (!user || !user.token) {
+      throw new Error('You must be signed in to delete a budget.')
+    }
+
+    const response = await fetch(`${API_BASE_URL}/budgets/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    })
+    const data = await response.json()
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Failed to delete budget.')
+    }
+
+    await fetchBudgets()
+  }, [user, fetchBudgets])
+
   const getMonthlySpending = useCallback(() => {
     const now = new Date()
     const currentMonth = now.getMonth()
@@ -248,6 +268,7 @@ export function BudgetProvider({ children }) {
     addTransaction,
     deleteTransaction,
     updateBudget,
+    deleteBudget,
     getMonthlySpending,
     getBudgetStatus,
     getMonthlyTotals,
